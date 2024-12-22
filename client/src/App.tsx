@@ -1,9 +1,17 @@
 import React, { useEffect, useState } from "react";
+import { useSecureData } from "./useSecureData.tsx";
 
 const API_URL = "http://localhost:8080";
 
 function App() {
-  const [data, setData] = useState<string>();
+  const [data, setData] = useState("");
+  const {
+    data: trustedData,
+    isCompromised,
+    saveData,
+    verifyData,
+    recoverData,
+  } = useSecureData();
 
   useEffect(() => {
     getData();
@@ -13,6 +21,7 @@ function App() {
     const response = await fetch(API_URL);
     const { data } = await response.json();
     setData(data);
+    await verifyData(data);
   };
 
   const updateData = async () => {
@@ -24,12 +33,12 @@ function App() {
         "Content-Type": "application/json",
       },
     });
-
-    await getData();
+    await saveData(data);
   };
 
-  const verifyData = async () => {
-    throw new Error("Not implemented");
+  const handleRecoverData = async () => {
+    await recoverData();
+    setData(trustedData);
   };
 
   return (
@@ -59,10 +68,20 @@ function App() {
         <button style={{ fontSize: "20px" }} onClick={updateData}>
           Update Data
         </button>
-        <button style={{ fontSize: "20px" }} onClick={verifyData}>
+        <button style={{ fontSize: "20px" }} onClick={getData}>
           Verify Data
         </button>
+        {isCompromised && (
+          <button style={{ fontSize: "20px" }} onClick={handleRecoverData}>
+            Recover Data
+          </button>
+        )}
       </div>
+      {isCompromised && (
+        <div style={{ color: "red", fontSize: "16px" }}>
+          Warning: Server data has been tampered with!
+        </div>
+      )}
     </div>
   );
 }
